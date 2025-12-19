@@ -1,66 +1,225 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Healthcare Appointment Booking API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A simple, well-tested RESTful API for booking healthcare appointments, built with Laravel and Laravel Sanctum.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Table of Contents
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Authentication](#authentication)
+- [API Endpoints (Examples)](#api-endpoints-examples)
+- [Business Rules](#business-rules)
+- [Testing](#testing)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
+- [Author](#author)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🚀 Features
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- Token-based authentication (Laravel Sanctum)
+- Appointment booking with **double-booking prevention**
+- Appointment status workflow: **pending → confirmed → completed → cancelled**
+- Cancellation allowed only **24 hours before** appointment time
+- Search available doctors by date, filter by specialization, and sort results
+- Patient appointment history and resources for consistent API responses
+- Validation and clear HTTP status codes
+- Database seeders for fast local testing
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠 Tech Stack
 
-## Laravel Sponsors
+- PHP 8+ / Laravel
+- MySQL (or any supported database)
+- Laravel Sanctum for API tokens
+- Eloquent ORM
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+---
 
-### Premium Partners
+## 📦 Quick Start
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+Requirements: PHP, Composer, MySQL (or preferred DB)
 
-## Contributing
+1. Clone repository
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+git clone <your-repository-url>
+cd healthcare
+```
 
-## Code of Conduct
+2. Install dependencies
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+composer install
+```
 
-## Security Vulnerabilities
+3. Environment
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+cp .env.example .env
+php artisan key:generate
+# Update .env with DB settings (DB_DATABASE, DB_USERNAME, DB_PASSWORD)
+```
 
-## License
+4. Migrate and seed
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+php artisan migrate --seed
+```
+
+5. Start development server
+
+```bash
+php artisan serve
+# default: http://127.0.0.1:8000
+```
+
+---
+
+## 🔐 Authentication
+
+Register a user:
+
+```http
+POST /api/register
+Content-Type: application/json
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "password",
+  "password_confirmation": "password"
+}
+```
+
+Login and receive token:
+
+```http
+POST /api/login
+Content-Type: application/json
+{
+  "email": "test@example.com",
+  "password": "password"
+}
+
+Response:
+{
+  "message": "Login successful",
+  "token": "1|xxxxxxxxxxxx"
+}
+```
+
+Use the returned token in the `Authorization` header for protected routes:
+
+```
+Authorization: Bearer {token}
+```
+
+Example curl (login):
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password"}'
+```
+
+---
+
+## 📅 API Endpoints (Examples)
+
+- Book appointment
+
+```http
+POST /api/appointments
+Headers: Authorization: Bearer {token}
+Body (JSON):
+{
+  "doctor_id": 1,
+  "patient_id": 1,
+  "appointment_date": "2025-12-25 10:00:00",
+  "notes": "General checkup"
+}
+```
+
+- Get appointment details
+
+```http
+GET /api/appointments/{id}
+```
+
+- Update appointment status
+
+```http
+PUT /api/appointments/{id}
+Body: { "status": "confirmed" }
+```
+
+- Cancel appointment
+
+```http
+DELETE /api/appointments/{id}
+# Note: cancellation allowed only if the appointment is at least 24 hours away
+```
+
+- Get available doctors
+
+```http
+GET /api/doctors/available?date=2025-12-25T10:00:00&specialization=cardiology&sort=name
+```
+
+- Get patient appointments
+
+```http
+GET /api/patients/{id}/appointments
+```
+
+---
+
+## Business Rules
+
+- Prevents double-booking for the same doctor at the same time.
+- Appointments can be cancelled only if more than 24 hours remain before the appointment time.
+- Appointment lifecycle: pending → confirmed → completed → cancelled
+
+---
+
+## 🧪 Testing
+
+- Seeded data is available via `php artisan db:seed` (run with migrations in Quick Start).
+- Run the test suite:
+
+```bash
+php artisan test
+```
+
+Manual API testing was done using Postman / Thunder Client.
+
+---
+
+## 📂 Project Structure
+
+Key folders:
+
+- `app/Http/Controllers/Api` — API controllers
+- `app/Http/Resources` — API resources
+- `database/migrations` — DB schema
+- `database/seeders` — sample data
+- `routes/api.php` — API routes
+
+---
+
+## 📄 License
+
+This project is provided as-is. 
+---
+
+## 👤 Author
+Aakib Kachchhi — PHP / Laravel Developer
+
+If you'd like changes to the README (more examples, a full OpenAPI spec, or examples for the frontend), tell me what you'd like and I can add them.
+
